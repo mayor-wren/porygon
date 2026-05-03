@@ -28,6 +28,7 @@ func runMigrations(db *sql.DB) error {
 			name       TEXT    NOT NULL UNIQUE,
 			response   TEXT    NOT NULL,
 			trigger    TEXT    NOT NULL DEFAULT 'command',
+			cooldown   INTEGER NOT NULL DEFAULT 0,
 			enabled    INTEGER NOT NULL DEFAULT 1,
 			created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
 			updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
@@ -46,5 +47,13 @@ func runMigrations(db *sql.DB) error {
 			created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 		);
 	`)
-	return err
+	if err != nil {
+		return err
+	}
+
+	// Migrate existing databases that predate the cooldown column.
+	// Fails silently on fresh databases where the column already exists.
+	db.Exec(`ALTER TABLE commands ADD COLUMN cooldown INTEGER NOT NULL DEFAULT 0`)
+
+	return nil
 }

@@ -50,8 +50,32 @@ func GetRandomQuote(db *sql.DB) (*Quote, error) {
 	return &quote, nil
 }
 
+func SearchQuote(db *sql.DB, query string) (*Quote, error) {
+	var quote Quote
+	err := db.QueryRow(`SELECT id, text, added_by, created_at FROM quotes WHERE text LIKE ? ORDER BY RANDOM() LIMIT 1`, "%"+query+"%").
+		Scan(&quote.ID, &quote.Text, &quote.AddedBy, &quote.CreatedAt)
+	if err != nil {
+		return nil, err
+	}
+	return &quote, nil
+}
+
+func QuoteExists(db *sql.DB, text string) (bool, error) {
+	var count int
+	err := db.QueryRow(`SELECT COUNT(*) FROM quotes WHERE text = ?`, text).Scan(&count)
+	return count > 0, err
+}
+
 func CreateQuote(db *sql.DB, text, addedBy string) (int64, error) {
 	result, err := db.Exec(`INSERT INTO quotes (text, added_by) VALUES (?, ?)`, text, addedBy)
+	if err != nil {
+		return 0, err
+	}
+	return result.LastInsertId()
+}
+
+func CreateQuoteWithTime(db *sql.DB, text, addedBy string, createdAt time.Time) (int64, error) {
+	result, err := db.Exec(`INSERT INTO quotes (text, added_by, created_at) VALUES (?, ?, ?)`, text, addedBy, createdAt)
 	if err != nil {
 		return 0, err
 	}

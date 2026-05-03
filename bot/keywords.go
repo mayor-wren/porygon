@@ -1,30 +1,44 @@
 package bot
 
 import (
-	"strings"
+	"time"
 
 	"github.com/gempir/go-twitch-irc/v4"
-	"github.com/mayor-wren/porygon/database"
 )
 
 func (bot *Bot) handleKeywordMatch(message twitch.PrivateMessage, text string) {
-	lowercaseText := strings.ToLower(text)
-
 	bot.mutex.RLock()
-	var matched *database.Command
-	for _, keyword := range bot.keywords {
-		if !keyword.Enabled {
+	var matchedIdx int = -1
+	for i, re := range bot.keywordRegexps {
+		if !bot.keywords[i].Enabled {
 			continue
 		}
-		if strings.Contains(lowercaseText, keyword.Name) {
-			matched = keyword
+		if re.MatchString(text) {
+			matchedIdx = i
 			break
 		}
 	}
 	bot.mutex.RUnlock()
 
-	if matched != nil {
-		bot.client.Say(message.Channel, matched.Response)
-		bot.LogCommand(message.User.DisplayName, matched.Name)
+	if matchedIdx == -1 {
+		return
 	}
+
+	bot.mutex.RLock()
+	keyword := bot.keywords[matchedIdx]
+	bot.mutex.RUnlock()
+
+	if keyword.Cooldown > 0 {
+		bot.mutex.Lock()
+		last, ok := bot.lastFired[keyword.Name]
+		if ok && time.Since(last) < time.Duration(keyword.Cooldown)*time.Second {
+			bot.mutex.Unlock()
+			return
+		}
+		bot.lastFired[keyword.Name] = time.Now()
+		bot.mutex.Unlock()
+	}
+
+	bot.client.Say(message.Channel, keyword.Response)
+	bot.LogCommand(message.User.DisplayName, keyword.Name)
 }

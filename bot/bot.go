@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"log/slog"
+	"regexp"
 	"strings"
 	"sync"
 	"time"
@@ -30,15 +31,17 @@ type Bot struct {
 	db     *sql.DB
 	client *twitch.Client
 
-	mutex        sync.RWMutex
-	commands     map[string]*database.Command
-	aliases      map[string]string
-	keywords     []*database.Command
-	restartCh    chan struct{}
-	startCh      chan struct{}
-	connCancel   context.CancelFunc
-	onAuthFailed func()
-	activityLog  []LogEntry
+	mutex           sync.RWMutex
+	commands        map[string]*database.Command
+	aliases         map[string]string
+	keywords        []*database.Command
+	keywordRegexps  []*regexp.Regexp
+	lastFired       map[string]time.Time
+	restartCh       chan struct{}
+	startCh         chan struct{}
+	connCancel      context.CancelFunc
+	onAuthFailed    func()
+	activityLog     []LogEntry
 
 	connected bool
 	stopped   bool
@@ -50,6 +53,7 @@ func New(config *Config, db *sql.DB) *Bot {
 		db:        db,
 		commands:  make(map[string]*database.Command),
 		aliases:   make(map[string]string),
+		lastFired: make(map[string]time.Time),
 		restartCh: make(chan struct{}, 1),
 		startCh:   make(chan struct{}, 1),
 		stopped:   true,
@@ -140,6 +144,7 @@ func (bot *Bot) ReloadCommands() error {
 	commands := make(map[string]*database.Command)
 	aliases := make(map[string]string)
 	var keywords []*database.Command
+	var keywordRegexps []*regexp.Regexp
 
 	for i := range allCommands {
 		command := &allCommands[i]
@@ -147,6 +152,8 @@ func (bot *Bot) ReloadCommands() error {
 		case "keyword":
 			command.Name = strings.ToLower(command.Name)
 			keywords = append(keywords, command)
+			pattern := `(?i)\b` + regexp.QuoteMeta(command.Name) + `\b`
+			keywordRegexps = append(keywordRegexps, regexp.MustCompile(pattern))
 		default:
 			commands[strings.ToLower(command.Name)] = command
 			for _, alias := range command.Aliases {
@@ -159,6 +166,7 @@ func (bot *Bot) ReloadCommands() error {
 	bot.commands = commands
 	bot.aliases = aliases
 	bot.keywords = keywords
+	bot.keywordRegexps = keywordRegexps
 	bot.mutex.Unlock()
 
 	return nil

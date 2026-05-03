@@ -5,6 +5,7 @@ import (
 	"errors"
 	"log/slog"
 	"net/http"
+	"strconv"
 	"strings"
 
 	"github.com/mayor-wren/porygon/database"
@@ -38,6 +39,10 @@ func (server *Server) handleCommandCreate(w http.ResponseWriter, r *http.Request
 	response := strings.TrimSpace(r.FormValue("response"))
 	trigger := r.FormValue("trigger")
 	aliasString := strings.TrimSpace(r.FormValue("aliases"))
+	cooldown, _ := strconv.Atoi(r.FormValue("cooldown"))
+	if cooldown < 0 {
+		cooldown = 0
+	}
 
 	if name == "" || response == "" {
 		http.Error(w, "name and response are required", http.StatusBadRequest)
@@ -53,6 +58,7 @@ func (server *Server) handleCommandCreate(w http.ResponseWriter, r *http.Request
 		"ResponseValue": response,
 		"TriggerValue":  trigger,
 		"AliasesValue":  aliasString,
+		"CooldownValue": cooldown,
 	}
 
 	if trigger == "command" {
@@ -71,7 +77,7 @@ func (server *Server) handleCommandCreate(w http.ResponseWriter, r *http.Request
 		}
 	}
 
-	commandID, err := database.CreateCommand(server.db, name, response, trigger)
+	commandID, err := database.CreateCommand(server.db, name, response, trigger, cooldown)
 	if err != nil {
 		if isUniqueConstraintError(err) {
 			formData["Error"] = "A command with that name already exists."
@@ -130,6 +136,7 @@ func (server *Server) handleCommandEdit(w http.ResponseWriter, r *http.Request) 
 		"ResponseValue": command.Response,
 		"TriggerValue":  command.Trigger,
 		"AliasesValue":  strings.Join(command.Aliases, ", "),
+		"CooldownValue": command.Cooldown,
 		"EnabledValue":  command.Enabled,
 	})
 }
@@ -150,6 +157,10 @@ func (server *Server) handleCommandUpdate(w http.ResponseWriter, r *http.Request
 	trigger := r.FormValue("trigger")
 	enabled := r.FormValue("enabled") == "on"
 	aliasString := strings.TrimSpace(r.FormValue("aliases"))
+	cooldown, _ := strconv.Atoi(r.FormValue("cooldown"))
+	if cooldown < 0 {
+		cooldown = 0
+	}
 
 	if name == "" || response == "" {
 		http.Error(w, "name and response are required", http.StatusBadRequest)
@@ -166,6 +177,7 @@ func (server *Server) handleCommandUpdate(w http.ResponseWriter, r *http.Request
 		"ResponseValue": response,
 		"TriggerValue":  trigger,
 		"AliasesValue":  aliasString,
+		"CooldownValue": cooldown,
 		"EnabledValue":  enabled,
 	}
 
@@ -185,7 +197,7 @@ func (server *Server) handleCommandUpdate(w http.ResponseWriter, r *http.Request
 		}
 	}
 
-	if err := database.UpdateCommand(server.db, commandID, name, response, trigger, enabled); err != nil {
+	if err := database.UpdateCommand(server.db, commandID, name, response, trigger, cooldown, enabled); err != nil {
 		if isUniqueConstraintError(err) {
 			formData["Error"] = "A command with that name already exists."
 			server.renderTemplate(w, "command_form.html", formData)

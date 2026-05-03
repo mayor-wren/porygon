@@ -23,6 +23,11 @@
             <input type="text" name="aliases" value="{{.AliasesValue}}">
         </label>
     </p>
+    <p>
+        <label>Cooldown (seconds):<br>
+            <input type="number" name="cooldown" value="{{.CooldownValue}}" min="0">
+        </label>
+    </p>
     {{if not .IsNew}}
     <p>
         <label>

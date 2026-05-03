@@ -8,6 +8,7 @@
         <th>Type</th>
         <th>Aliases</th>
         <th>Response</th>
+        <th>Cooldown</th>
         <th>Enabled</th>
         <th>Actions</th>
     </tr>
@@ -17,6 +18,7 @@
         <td>{{.Trigger}}</td>
         <td>{{range $i, $a := .Aliases}}{{if $i}}, {{end}}{{$a}}{{end}}</td>
         <td>{{.Response}}</td>
+        <td>{{if .Cooldown}}{{.Cooldown}}s{{else}}-{{end}}</td>
         <td>{{if .Enabled}}Yes{{else}}No{{end}}</td>
         <td>
             <a href="/commands/{{.ID}}/edit">Edit</a>
@@ -26,7 +28,7 @@
         </td>
     </tr>
     {{else}}
-    <tr><td colspan="6">No commands yet.</td></tr>
+    <tr><td colspan="7">No commands yet.</td></tr>
     {{end}}
 </table>
 {{end}}
