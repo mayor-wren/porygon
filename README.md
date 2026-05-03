@@ -8,19 +8,13 @@ A simple Twitch chat bot.
 
 ## Setup
 
-1. Clone the repo and create a `.env` file:
-
-```
-cp .env.example .env
-```
-
-2. Start the server:
+1. Start the server:
 
 ```
 go run .
 ```
 
-3. Open [http://localhost:7310](http://localhost:7310) and follow the setup instructions to connect your Twitch account(s).
+2. Open [http://localhost:7310](http://localhost:7310) and follow the setup instructions to connect your Twitch account(s).
 
 
 ## Stopping
