@@ -1,0 +1,48 @@
+{{template "layout" .}}
+{{define "content"}}
+<h1>{{if .IsNew}}New Command{{else}}Edit Command{{end}}</h1>
+{{if .Error}}<p class="error">{{.Error}}</p>{{end}}
+<form method="POST" action="{{if .IsNew}}/commands{{else}}/commands/{{.Command.ID}}{{end}}">
+    <p>
+        <label>Name:<br>
+            <input type="text" name="name" value="{{.NameValue}}" required>
+        </label>
+    </p>
+    <p>
+        <label>Response:<br>
+            <textarea name="response" rows="3" cols="60" required>{{.ResponseValue}}</textarea>
+        </label>
+    </p>
+    <p>
+        Trigger type:<br>
+        <label><input type="radio" name="trigger" id="trigger-command" value="command" {{if eq .TriggerValue "command"}}checked{{end}}> !command</label>
+        <label><input type="radio" name="trigger" id="trigger-keyword" value="keyword" {{if eq .TriggerValue "keyword"}}checked{{end}}> keyword</label>
+    </p>
+    <p id="aliases-field">
+        <label>Aliases (comma-separated):<br>
+            <input type="text" name="aliases" value="{{.AliasesValue}}">
+        </label>
+    </p>
+    {{if not .IsNew}}
+    <p>
+        <label>
+            <input type="checkbox" name="enabled" {{if .EnabledValue}}checked{{end}}> Enabled
+        </label>
+    </p>
+    {{end}}
+    <p><button type="submit">{{if .IsNew}}Create{{else}}Update{{end}}</button></p>
+</form>
+<p><a href="/commands">Back to commands</a></p>
+<script>
+(function() {
+    var radios = document.querySelectorAll('input[name="trigger"]');
+    var aliasField = document.getElementById('aliases-field');
+    function update() {
+        var val = document.querySelector('input[name="trigger"]:checked').value;
+        aliasField.style.display = val === 'keyword' ? 'none' : '';
+    }
+    radios.forEach(function(r) { r.addEventListener('change', update); });
+    update();
+})();
+</script>
+{{end}}

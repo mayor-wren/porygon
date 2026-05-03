@@ -1,0 +1,89 @@
+body {
+    font-family: sans-serif;
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 1rem;
+}
+
+nav {
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid #ccc;
+}
+
+nav a {
+    margin-right: 1rem;
+}
+
+table {
+    border-collapse: collapse;
+    width: 100%;
+}
+
+th, td {
+    text-align: left;
+    padding: 0.4rem 0.8rem;
+    border-bottom: 1px solid #eee;
+}
+
+th {
+    border-bottom: 2px solid #ccc;
+}
+
+textarea, input[type="text"] {
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.setup-step {
+    border: 1px solid #ccc;
+    padding: 1rem;
+    margin-bottom: 1rem;
+}
+
+a.button {
+    display: inline-block;
+    padding: 0.4rem 1rem;
+    background: #6441a5;
+    color: #fff;
+    text-decoration: none;
+}
+
+input[type="password"] {
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.inline {
+    display: inline;
+}
+
+.hint {
+    color: #888;
+    font-size: 0.9em;
+}
+
+.bot-controls {
+    margin-bottom: 1rem;
+}
+
+.status-connected {
+    color: #2a7d2a;
+}
+
+.status-disconnected {
+    color: #999;
+}
+
+.status-connecting {
+    color: #c90;
+}
+
+a.button.disabled {
+    pointer-events: none;
+    opacity: 0.5;
+}
+
+.setup-oauth {
+    margin-top: 1rem;
+}

@@ -1,0 +1,152 @@
+{{template "layout" .}}
+{{define "content"}}
+{{if not .SetupComplete}}
+<h1>Setup</h1>
+
+<p>Create a Twitch application at
+    <a href="https://dev.twitch.tv/console/apps" target="_blank">dev.twitch.tv/console/apps</a>.
+    Set the OAuth Redirect URL to: <code>{{.CallbackURL}}</code></p>
+
+<form method="POST" action="/setup" id="setup-form">
+    <p>
+        <label>Streamer Username:<br>
+            <input type="text" name="streamer_username" id="streamer-username" value="{{.Channel}}" required>
+        </label>
+    </p>
+    <p>
+        <label>
+            <input type="checkbox" id="same-account"{{if and .BotUsername .Channel (eq .BotUsername .Channel)}} checked{{end}}>
+            Bot is the same as streamer
+        </label>
+    </p>
+    <p id="bot-username-field">
+        <label>Bot Username:<br>
+            <input type="text" name="bot_username" id="bot-username" value="{{.BotUsername}}" required>
+        </label>
+    </p>
+    <p>
+        <label>Client ID:<br>
+            <input type="text" name="client_id" value="{{.ClientID}}" required>
+        </label>
+    </p>
+    <p>
+        <label>Client Secret:<br>
+            <input type="password" name="client_secret"{{if not .HasSetupInfo}} required{{end}}
+                placeholder="{{if .HasSetupInfo}}leave blank to keep current{{end}}">
+        </label>
+    </p>
+    <p><button type="submit">Save</button></p>
+</form>
+
+<div class="setup-oauth">
+    <p>
+        <a href="/auth/login/streamer" id="streamer-auth-link"
+            class="button{{if not .HasSetupInfo}} disabled{{end}}">Authenticate Streamer</a>
+        {{if .HasStreamerToken}}<span class="hint"> &#10003; connected</span>{{end}}
+    </p>
+    <p id="bot-auth">
+        <a href="/auth/login/bot" id="bot-auth-link"
+            class="button{{if not .HasSetupInfo}} disabled{{end}}">Authenticate Bot</a>
+        {{if .HasBotToken}}<span class="hint"> &#10003; connected</span>{{end}}
+    </p>
+</div>
+
+<script>
+(function() {
+    var checkbox = document.getElementById('same-account');
+    var botField = document.getElementById('bot-username-field');
+    var botAuth = document.getElementById('bot-auth');
+    var botInput = document.getElementById('bot-username');
+    var streamerInput = document.getElementById('streamer-username');
+    var streamerLink = document.getElementById('streamer-auth-link');
+    var baseHref = streamerLink.getAttribute('href').split('?')[0];
+    var form = document.getElementById('setup-form');
+
+    function update() {
+        if (checkbox.checked) {
+            botField.style.display = 'none';
+            botAuth.style.display = 'none';
+            botInput.required = false;
+            streamerLink.href = baseHref + '?same=true';
+        } else {
+            botField.style.display = '';
+            botAuth.style.display = '';
+            botInput.required = true;
+            streamerLink.href = baseHref;
+        }
+    }
+
+    checkbox.addEventListener('change', update);
+    update();
+
+    form.addEventListener('submit', function() {
+        if (checkbox.checked) {
+            botInput.value = streamerInput.value;
+        }
+    });
+})();
+</script>
+
+{{else}}
+<h1>Dashboard</h1>
+
+<div class="bot-controls" id="bot-status">
+    {{if .BotConnected}}
+    <h2>Bot Status: <span class="status-connected">Connected</span></h2>
+    <form method="POST" action="/bot/stop"><button type="submit">Stop Bot</button></form>
+    {{else if .BotStopped}}
+    <h2>Bot Status: <span class="status-disconnected">Disconnected</span></h2>
+    <form method="POST" action="/bot/start"><button type="submit">Start Bot</button></form>
+    {{else}}
+    <h2>Bot Status: <span class="status-connecting">Connecting...</span></h2>
+    <form method="POST" action="/bot/stop"><button type="submit">Stop Bot</button></form>
+    {{end}}
+</div>
+
+<h2>Recent Commands</h2>
+<table id="command-log">
+    <thead><tr><th>Time</th><th>User</th><th>Command</th></tr></thead>
+    <tbody id="log-entries"></tbody>
+</table>
+
+<script>
+(function() {
+    var lastConnected = {{if .BotConnected}}true{{else}}false{{end}};
+    var lastStopped = {{if .BotStopped}}true{{else}}false{{end}};
+
+    setInterval(function() {
+        fetch('/bot/status')
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                if (data.connected !== lastConnected || data.stopped !== lastStopped) {
+                    location.reload();
+                }
+            })
+            .catch(function() {});
+    }, 2000);
+
+    function updateLog() {
+        fetch('/bot/log')
+            .then(function(r) { return r.json(); })
+            .then(function(entries) {
+                var tbody = document.getElementById('log-entries');
+                tbody.innerHTML = '';
+                entries.forEach(function(e) {
+                    var tr = document.createElement('tr');
+                    [e.time, e.user, e.command].forEach(function(val) {
+                        var td = document.createElement('td');
+                        td.textContent = val;
+                        tr.appendChild(td);
+                    });
+                    tbody.appendChild(tr);
+                });
+            })
+            .catch(function() {});
+    }
+    updateLog();
+    setInterval(updateLog, 3000);
+})();
+</script>
+
+{{end}}
+{{end}}

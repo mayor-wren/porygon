@@ -1,0 +1,82 @@
+{{template "layout" .}}
+{{define "content"}}
+<h1>Settings</h1>
+
+<form method="POST" action="/setup" id="settings-form">
+    <input type="hidden" name="_redirect" value="/settings">
+    <p>
+        <label>Streamer Username:<br>
+            <input type="text" name="streamer_username" id="streamer-username" value="{{.Channel}}" required>
+        </label>
+    </p>
+    <p>
+        <label>
+            <input type="checkbox" id="same-account"{{if and .BotUsername .Channel (eq .BotUsername .Channel)}} checked{{end}}>
+            Bot is the same as streamer
+        </label>
+    </p>
+    <p id="bot-username-field">
+        <label>Bot Username:<br>
+            <input type="text" name="bot_username" id="bot-username" value="{{.BotUsername}}" required>
+        </label>
+    </p>
+    <p>
+        <label>Client ID:<br>
+            <input type="text" name="client_id" value="{{.ClientID}}" required>
+        </label>
+    </p>
+    <p>
+        <label>Client Secret:<br>
+            <input type="password" name="client_secret" placeholder="leave blank to keep current">
+        </label>
+    </p>
+    <p><button type="submit">Update</button></p>
+</form>
+
+<h2>Authentication</h2>
+<p>OAuth Redirect URL: <code>{{.CallbackURL}}</code></p>
+<p>
+    <a href="/auth/login/streamer" id="streamer-auth-link" class="button">Re-authenticate Streamer</a>
+    {{if .HasStreamerToken}}<span class="hint"> &#10003; connected</span>{{end}}
+</p>
+<p id="bot-auth">
+    <a href="/auth/login/bot" class="button">Re-authenticate Bot</a>
+    {{if .HasBotToken}}<span class="hint"> &#10003; connected</span>{{end}}
+</p>
+
+<script>
+(function() {
+    var checkbox = document.getElementById('same-account');
+    var botField = document.getElementById('bot-username-field');
+    var botAuth = document.getElementById('bot-auth');
+    var botInput = document.getElementById('bot-username');
+    var streamerInput = document.getElementById('streamer-username');
+    var streamerLink = document.getElementById('streamer-auth-link');
+    var baseHref = streamerLink.getAttribute('href').split('?')[0];
+    var form = document.getElementById('settings-form');
+
+    function update() {
+        if (checkbox.checked) {
+            botField.style.display = 'none';
+            botAuth.style.display = 'none';
+            botInput.required = false;
+            streamerLink.href = baseHref + '?same=true';
+        } else {
+            botField.style.display = '';
+            botAuth.style.display = '';
+            botInput.required = true;
+            streamerLink.href = baseHref;
+        }
+    }
+
+    checkbox.addEventListener('change', update);
+    update();
+
+    form.addEventListener('submit', function() {
+        if (checkbox.checked) {
+            botInput.value = streamerInput.value;
+        }
+    });
+})();
+</script>
+{{end}}

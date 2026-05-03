@@ -1,0 +1,13 @@
+{{template "layout" .}}
+{{define "content"}}
+<h1>{{if .IsNew}}New Quote{{else}}Edit Quote #{{.Quote.ID}}{{end}}</h1>
+<form method="POST" action="{{if .IsNew}}/quotes{{else}}/quotes/{{.Quote.ID}}{{end}}">
+    <p>
+        <label>Quote text:<br>
+            <textarea name="text" rows="3" cols="60" required>{{if not .IsNew}}{{.Quote.Text}}{{end}}</textarea>
+        </label>
+    </p>
+    <p><button type="submit">{{if .IsNew}}Create{{else}}Update{{end}}</button></p>
+</form>
+<p><a href="/quotes">Back to quotes</a></p>
+{{end}}
