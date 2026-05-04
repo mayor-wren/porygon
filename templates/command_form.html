@@ -23,6 +23,11 @@
             <input type="text" name="aliases" value="{{.AliasesValue}}">
         </label>
     </p>
+    <p id="match-start-field">
+        <label>
+            <input type="checkbox" name="match_start" {{if .MatchStartValue}}checked{{end}}> Only match at start of message
+        </label>
+    </p>
     <p>
         <label>Cooldown (seconds):<br>
             <input type="number" name="cooldown" value="{{.CooldownValue}}" min="0">
@@ -42,9 +47,11 @@
 (function() {
     var radios = document.querySelectorAll('input[name="trigger"]');
     var aliasField = document.getElementById('aliases-field');
+    var matchStartField = document.getElementById('match-start-field');
     function update() {
         var val = document.querySelector('input[name="trigger"]:checked').value;
         aliasField.style.display = val === 'keyword' ? 'none' : '';
+        matchStartField.style.display = val === 'keyword' ? '' : 'none';
     }
     radios.forEach(function(r) { r.addEventListener('change', update); });
     update();

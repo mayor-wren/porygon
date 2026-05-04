@@ -51,9 +51,8 @@ func runMigrations(db *sql.DB) error {
 		return err
 	}
 
-	// Migrate existing databases that predate the cooldown column.
-	// Fails silently on fresh databases where the column already exists.
 	db.Exec(`ALTER TABLE commands ADD COLUMN cooldown INTEGER NOT NULL DEFAULT 0`)
+	db.Exec(`ALTER TABLE commands ADD COLUMN match_start INTEGER NOT NULL DEFAULT 0`)
 
 	return nil
 }

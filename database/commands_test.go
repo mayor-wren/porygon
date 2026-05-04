@@ -8,7 +8,7 @@ func TestCreateAndGetCommand(t *testing.T) {
 	db := setupTestDB(t)
 	defer db.close()
 
-	commandID, err := CreateCommand(db.DB, "hello", "Hello there!", "command", 0)
+	commandID, err := CreateCommand(db.DB, "hello", "Hello there!", "command", 0, false)
 	if err != nil {
 		t.Fatalf("failed to create command: %v", err)
 	}
@@ -36,9 +36,9 @@ func TestGetAllCommands(t *testing.T) {
 	db := setupTestDB(t)
 	defer db.close()
 
-	CreateCommand(db.DB, "hello", "Hello!", "command", 0)
-	CreateCommand(db.DB, "goodbye", "Goodbye!", "command", 0)
-	CreateCommand(db.DB, "lurk", "is lurking", "keyword", 0)
+	CreateCommand(db.DB, "hello", "Hello!", "command", 0, false)
+	CreateCommand(db.DB, "goodbye", "Goodbye!", "command", 0, false)
+	CreateCommand(db.DB, "lurk", "is lurking", "keyword", 0, false)
 
 	commands, err := GetAllCommands(db.DB)
 	if err != nil {
@@ -54,9 +54,9 @@ func TestUpdateCommand(t *testing.T) {
 	db := setupTestDB(t)
 	defer db.close()
 
-	commandID, _ := CreateCommand(db.DB, "hello", "Hello!", "command", 0)
+	commandID, _ := CreateCommand(db.DB, "hello", "Hello!", "command", 0, false)
 
-	err := UpdateCommand(db.DB, int(commandID), "hello", "Updated response!", "keyword", 0, false)
+	err := UpdateCommand(db.DB, int(commandID), "hello", "Updated response!", "keyword", 0, false, false)
 	if err != nil {
 		t.Fatalf("failed to update command: %v", err)
 	}
@@ -77,7 +77,7 @@ func TestDeleteCommand(t *testing.T) {
 	db := setupTestDB(t)
 	defer db.close()
 
-	commandID, _ := CreateCommand(db.DB, "hello", "Hello!", "command", 0)
+	commandID, _ := CreateCommand(db.DB, "hello", "Hello!", "command", 0, false)
 
 	err := DeleteCommand(db.DB, int(commandID))
 	if err != nil {
@@ -94,7 +94,7 @@ func TestSetAndGetAliases(t *testing.T) {
 	db := setupTestDB(t)
 	defer db.close()
 
-	commandID, _ := CreateCommand(db.DB, "song", "Now playing: ...", "command", 0)
+	commandID, _ := CreateCommand(db.DB, "song", "Now playing: ...", "command", 0, false)
 
 	err := SetAliases(db.DB, int(commandID), []string{"music", "nowplaying", "np"})
 	if err != nil {
@@ -120,7 +120,7 @@ func TestSetAliasesReplacesExisting(t *testing.T) {
 	db := setupTestDB(t)
 	defer db.close()
 
-	commandID, _ := CreateCommand(db.DB, "song", "Now playing", "command", 0)
+	commandID, _ := CreateCommand(db.DB, "song", "Now playing", "command", 0, false)
 
 	SetAliases(db.DB, int(commandID), []string{"music", "np"})
 	SetAliases(db.DB, int(commandID), []string{"track"})
@@ -138,7 +138,7 @@ func TestDeleteCommandCascadesAliases(t *testing.T) {
 	db := setupTestDB(t)
 	defer db.close()
 
-	commandID, _ := CreateCommand(db.DB, "song", "Now playing", "command", 0)
+	commandID, _ := CreateCommand(db.DB, "song", "Now playing", "command", 0, false)
 	SetAliases(db.DB, int(commandID), []string{"music", "np"})
 
 	DeleteCommand(db.DB, int(commandID))
@@ -156,7 +156,7 @@ func TestCommandAliasesLoadedWithGetCommand(t *testing.T) {
 	db := setupTestDB(t)
 	defer db.close()
 
-	commandID, _ := CreateCommand(db.DB, "song", "Now playing", "command", 0)
+	commandID, _ := CreateCommand(db.DB, "song", "Now playing", "command", 0, false)
 	SetAliases(db.DB, int(commandID), []string{"music", "np"})
 
 	command, err := GetCommand(db.DB, int(commandID))

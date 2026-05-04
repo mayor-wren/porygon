@@ -6,19 +6,20 @@ import (
 )
 
 type Command struct {
-	ID        int
-	Name      string
-	Response  string
-	Trigger   string
-	Cooldown  int
-	Enabled   bool
-	Aliases   []string
-	CreatedAt time.Time
-	UpdatedAt time.Time
+	ID         int
+	Name       string
+	Response   string
+	Trigger    string
+	Cooldown   int
+	MatchStart bool
+	Enabled    bool
+	Aliases    []string
+	CreatedAt  time.Time
+	UpdatedAt  time.Time
 }
 
 func GetAllCommands(db *sql.DB) ([]Command, error) {
-	rows, err := db.Query(`SELECT id, name, response, trigger, cooldown, enabled, created_at, updated_at FROM commands ORDER BY name`)
+	rows, err := db.Query(`SELECT id, name, response, trigger, cooldown, match_start, enabled, created_at, updated_at FROM commands ORDER BY name`)
 	if err != nil {
 		return nil, err
 	}
@@ -27,7 +28,7 @@ func GetAllCommands(db *sql.DB) ([]Command, error) {
 	var commands []Command
 	for rows.Next() {
 		var command Command
-		if err := rows.Scan(&command.ID, &command.Name, &command.Response, &command.Trigger, &command.Cooldown, &command.Enabled, &command.CreatedAt, &command.UpdatedAt); err != nil {
+		if err := rows.Scan(&command.ID, &command.Name, &command.Response, &command.Trigger, &command.Cooldown, &command.MatchStart, &command.Enabled, &command.CreatedAt, &command.UpdatedAt); err != nil {
 			return nil, err
 		}
 		commands = append(commands, command)
@@ -65,8 +66,8 @@ func GetAllCommands(db *sql.DB) ([]Command, error) {
 
 func GetCommand(db *sql.DB, id int) (*Command, error) {
 	var command Command
-	err := db.QueryRow(`SELECT id, name, response, trigger, cooldown, enabled, created_at, updated_at FROM commands WHERE id = ?`, id).
-		Scan(&command.ID, &command.Name, &command.Response, &command.Trigger, &command.Cooldown, &command.Enabled, &command.CreatedAt, &command.UpdatedAt)
+	err := db.QueryRow(`SELECT id, name, response, trigger, cooldown, match_start, enabled, created_at, updated_at FROM commands WHERE id = ?`, id).
+		Scan(&command.ID, &command.Name, &command.Response, &command.Trigger, &command.Cooldown, &command.MatchStart, &command.Enabled, &command.CreatedAt, &command.UpdatedAt)
 	if err != nil {
 		return nil, err
 	}
@@ -80,17 +81,17 @@ func GetCommand(db *sql.DB, id int) (*Command, error) {
 	return &command, nil
 }
 
-func CreateCommand(db *sql.DB, name, response, trigger string, cooldown int) (int64, error) {
-	result, err := db.Exec(`INSERT INTO commands (name, response, trigger, cooldown) VALUES (?, ?, ?, ?)`, name, response, trigger, cooldown)
+func CreateCommand(db *sql.DB, name, response, trigger string, cooldown int, matchStart bool) (int64, error) {
+	result, err := db.Exec(`INSERT INTO commands (name, response, trigger, cooldown, match_start) VALUES (?, ?, ?, ?, ?)`, name, response, trigger, cooldown, matchStart)
 	if err != nil {
 		return 0, err
 	}
 	return result.LastInsertId()
 }
 
-func UpdateCommand(db *sql.DB, id int, name, response, trigger string, cooldown int, enabled bool) error {
-	_, err := db.Exec(`UPDATE commands SET name = ?, response = ?, trigger = ?, cooldown = ?, enabled = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
-		name, response, trigger, cooldown, enabled, id)
+func UpdateCommand(db *sql.DB, id int, name, response, trigger string, cooldown int, matchStart bool, enabled bool) error {
+	_, err := db.Exec(`UPDATE commands SET name = ?, response = ?, trigger = ?, cooldown = ?, match_start = ?, enabled = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
+		name, response, trigger, cooldown, matchStart, enabled, id)
 	return err
 }
 

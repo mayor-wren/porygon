@@ -152,7 +152,12 @@ func (bot *Bot) ReloadCommands() error {
 		case "keyword":
 			command.Name = strings.ToLower(command.Name)
 			keywords = append(keywords, command)
-			pattern := `(?i)\b` + regexp.QuoteMeta(command.Name) + `\b`
+			var pattern string
+			if command.MatchStart {
+				pattern = `(?i)^` + regexp.QuoteMeta(command.Name) + `\b`
+			} else {
+				pattern = `(?i)\b` + regexp.QuoteMeta(command.Name) + `\b`
+			}
 			keywordRegexps = append(keywordRegexps, regexp.MustCompile(pattern))
 		default:
 			commands[strings.ToLower(command.Name)] = command

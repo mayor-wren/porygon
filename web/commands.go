@@ -43,6 +43,7 @@ func (server *Server) handleCommandCreate(w http.ResponseWriter, r *http.Request
 	if cooldown < 0 {
 		cooldown = 0
 	}
+	matchStart := r.FormValue("match_start") == "on"
 
 	if name == "" || response == "" {
 		http.Error(w, "name and response are required", http.StatusBadRequest)
@@ -53,12 +54,13 @@ func (server *Server) handleCommandCreate(w http.ResponseWriter, r *http.Request
 	}
 
 	formData := map[string]any{
-		"IsNew":         true,
-		"NameValue":     name,
-		"ResponseValue": response,
-		"TriggerValue":  trigger,
-		"AliasesValue":  aliasString,
-		"CooldownValue": cooldown,
+		"IsNew":           true,
+		"NameValue":       name,
+		"ResponseValue":   response,
+		"TriggerValue":    trigger,
+		"AliasesValue":    aliasString,
+		"CooldownValue":   cooldown,
+		"MatchStartValue": matchStart,
 	}
 
 	if trigger == "command" {
@@ -77,7 +79,7 @@ func (server *Server) handleCommandCreate(w http.ResponseWriter, r *http.Request
 		}
 	}
 
-	commandID, err := database.CreateCommand(server.db, name, response, trigger, cooldown)
+	commandID, err := database.CreateCommand(server.db, name, response, trigger, cooldown, matchStart)
 	if err != nil {
 		if isUniqueConstraintError(err) {
 			formData["Error"] = "A command with that name already exists."
@@ -130,14 +132,15 @@ func (server *Server) handleCommandEdit(w http.ResponseWriter, r *http.Request) 
 	}
 
 	server.renderTemplate(w, "command_form.html", map[string]any{
-		"IsNew":         false,
-		"Command":       command,
-		"NameValue":     command.Name,
-		"ResponseValue": command.Response,
-		"TriggerValue":  command.Trigger,
-		"AliasesValue":  strings.Join(command.Aliases, ", "),
-		"CooldownValue": command.Cooldown,
-		"EnabledValue":  command.Enabled,
+		"IsNew":           false,
+		"Command":         command,
+		"NameValue":       command.Name,
+		"ResponseValue":   command.Response,
+		"TriggerValue":    command.Trigger,
+		"AliasesValue":    strings.Join(command.Aliases, ", "),
+		"CooldownValue":   command.Cooldown,
+		"MatchStartValue": command.MatchStart,
+		"EnabledValue":    command.Enabled,
 	})
 }
 
@@ -161,6 +164,7 @@ func (server *Server) handleCommandUpdate(w http.ResponseWriter, r *http.Request
 	if cooldown < 0 {
 		cooldown = 0
 	}
+	matchStart := r.FormValue("match_start") == "on"
 
 	if name == "" || response == "" {
 		http.Error(w, "name and response are required", http.StatusBadRequest)
@@ -171,14 +175,15 @@ func (server *Server) handleCommandUpdate(w http.ResponseWriter, r *http.Request
 	}
 
 	formData := map[string]any{
-		"IsNew":         false,
-		"Command":       &database.Command{ID: commandID},
-		"NameValue":     name,
-		"ResponseValue": response,
-		"TriggerValue":  trigger,
-		"AliasesValue":  aliasString,
-		"CooldownValue": cooldown,
-		"EnabledValue":  enabled,
+		"IsNew":           false,
+		"Command":         &database.Command{ID: commandID},
+		"NameValue":       name,
+		"ResponseValue":   response,
+		"TriggerValue":    trigger,
+		"AliasesValue":    aliasString,
+		"CooldownValue":   cooldown,
+		"MatchStartValue": matchStart,
+		"EnabledValue":    enabled,
 	}
 
 	if trigger == "command" {
@@ -197,7 +202,7 @@ func (server *Server) handleCommandUpdate(w http.ResponseWriter, r *http.Request
 		}
 	}
 
-	if err := database.UpdateCommand(server.db, commandID, name, response, trigger, cooldown, enabled); err != nil {
+	if err := database.UpdateCommand(server.db, commandID, name, response, trigger, cooldown, matchStart, enabled); err != nil {
 		if isUniqueConstraintError(err) {
 			formData["Error"] = "A command with that name already exists."
 			server.renderTemplate(w, "command_form.html", formData)
